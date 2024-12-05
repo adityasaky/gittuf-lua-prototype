@@ -26,6 +26,8 @@ end
 
 func NewLuaEnvironment() (*lua.LState, error) {
 	lState := lua.NewState(lua.Options{SkipOpenLibs: true})
+
+	// Load Lua libraries
 	for _, pair := range []struct {
 		n string
 		f lua.LGFunction
@@ -45,10 +47,17 @@ func NewLuaEnvironment() (*lua.LState, error) {
 		}
 	}
 
+	// Load Go helpers
+	for name, helper := range allGoHelpers {
+		lState.SetGlobal(name, lState.NewFunction(helper))
+	}
+
+	// Load environment values
 	if err := lState.DoString(setupEnvironment); err != nil {
 		return nil, err
 	}
 
+	// Load Lua helpers
 	if err := lState.DoString(helpers); err != nil {
 		return nil, err
 	}
